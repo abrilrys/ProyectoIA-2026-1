@@ -1,12 +1,20 @@
 import streamlit as st
 from utils import (
-    load_mock_recipe,
+    load_json,
     extract_ingredients,
     generate_weekly_plan,
     get_nutrient,
+    RECIPIES_FILE,
+    filter_recipes_by_ids,
+)
+from genetic_algorithm import (
+    generar_plan_2_dias_ga,
+    load_and_prepare,
+    COMMON_MISSING_PENALTY,
+    NORMAL_MISSING_PENALTY,
 )
 
-data, recipe = load_mock_recipe()
+db = load_json(RECIPIES_FILE)
 
 st.set_page_config(page_title="SciFitNoFat", page_icon="🥑", layout="wide")
 
@@ -36,14 +44,38 @@ with st.sidebar:
     if mode == 1:
         ingredients = st.multiselect(
             "Ingredientes",
-            options=extract_ingredients(data),
+            options=extract_ingredients(db),
             format_func=lambda ingredient: ingredient.title(),
         )
     if st.button("Generar Plan Semanal", type="primary"):
         st.session_state["plan_generated"] = True
+        user_data = {
+            "ingredients": ingredients,
+            "kcal": kcal_target,
+            "proteins": proteins_target,
+            "carbs": carbs_target,
+            "fat": fat_target,
+        }
         # Here you would call your friend's function:
         # st.session_state['weekly_data'] = efficient_recipe_selector(ingredients, macros, budget)
-        st.session_state["weekly_data"] = generate_weekly_plan(recipe)
+        data = load_and_prepare(RECIPIES_FILE)
+        result = generar_plan_2_dias_ga(
+            data,
+            user_data,
+            weight_cal=1.0,
+            weight_pro=1.0,
+            weight_carb=1.0,
+            weight_fat=1.0,
+            common_missing_penalty=COMMON_MISSING_PENALTY,
+            normal_missing_penalty=NORMAL_MISSING_PENALTY,
+            pop_size=300,
+            generations=500,
+            mutation_rate=0.12,
+            elite_frac=0.06,
+            random_seed=42,
+        )
+        filtered_recipes = filter_recipes_by_ids(db, result["selection_ids"])
+        st.session_state["weekly_data"] = generate_weekly_plan(filtered_recipes)
 
 
 if "plan_generated" not in st.session_state:
