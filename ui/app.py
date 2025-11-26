@@ -1,5 +1,7 @@
+import time
 import streamlit as st
 from utils import (
+    complete_gen_recipes,
     load_json,
     extract_ingredients,
     generate_weekly_plan,
@@ -52,45 +54,53 @@ with st.sidebar:
             options=extract_ingredients(db),
             format_func=lambda ingredient: ingredient.title(),
         )
+    # Se pulsó el botón para generar recetas
     if st.button("Generar Plan Semanal", type="primary"):
-        st.session_state["plan_generated"] = True
-        user_data = {
-            "budget": budget,
-            "ingredients": ingredients,
-            "kcal": kcal_target,
-            "proteins": proteins_target,
-            "carbs": carbs_target,
-            "fat": fat_target,
-        }
-        data = load_and_prepare(RECIPIES_FILE)
-        if mode == 1:
-            result = generar_plan_2_dias_ga(
-                data,
-                user_data,
-                weight_cal=1.0,
-                weight_pro=1.0,
-                weight_carb=1.0,
-                weight_fat=1.0,
-                common_missing_penalty=COMMON_MISSING_PENALTY,
-                normal_missing_penalty=NORMAL_MISSING_PENALTY,
-                pop_size=300,
-                generations=500,
-                mutation_rate=0.12,
-                elite_frac=0.06,
-                random_seed=42,
-            )
-            recipes_ids = result["selection_ids"]
-        else:
-            recipes_ids, totals = build_week_plan(
-                budget_week=user_data["budget"],
-                cal_target_day=user_data["kcal"],
-                p_target_day=user_data["proteins"],
-                f_target_day=user_data["fat"],
-                c_target_day=user_data["carbs"],
-                max_repeats_per_recipe=2,
-            )
-        filtered_recipes = filter_recipes_by_ids(db, recipes_ids)
-        st.session_state["weekly_data"] = generate_weekly_plan(filtered_recipes)
+        with st.spinner("Creando tu plan..."):
+            st.session_state["plan_generated"] = True
+            user_data = {
+                "budget": budget,
+                "ingredients": ingredients,
+                "kcal": kcal_target,
+                "proteins": proteins_target,
+                "carbs": carbs_target,
+                "fat": fat_target,
+            }
+            # Usa la alacena
+            if mode == 1:
+                data = load_and_prepare(RECIPIES_FILE)
+                result = generar_plan_2_dias_ga(
+                    data,
+                    user_data,
+                    weight_cal=1.0,
+                    weight_pro=1.0,
+                    weight_carb=1.0,
+                    weight_fat=1.0,
+                    common_missing_penalty=COMMON_MISSING_PENALTY,
+                    normal_missing_penalty=NORMAL_MISSING_PENALTY,
+                    pop_size=300,
+                    generations=500,
+                    mutation_rate=0.12,
+                    elite_frac=0.06,
+                    random_seed=42,
+                )
+                # Recipes with fields 'index', 'id_json', 'title', 'ingredients_list', 'calories', 'protein', 'carbs', 'fat', 'dishTypes', 'meal_type', 'matched', 'missing_common', 'missing_normal', 'missing', 'missing_count'
+                recipes = result["selection"]
+                recipes = complete_gen_recipes(db, recipes)
+                st.session_state["weekly_data"] = order_recipes_by_day(recipes, mode)
+            else:
+                recipes_ids, totals = build_week_plan(
+                    budget_week=user_data["budget"],
+                    cal_target_day=user_data["kcal"],
+                    p_target_day=user_data["proteins"],
+                    f_target_day=user_data["fat"],
+                    c_target_day=user_data["carbs"],
+                    max_repeats_per_recipe=2,
+                )
+                filtered_recipes = filter_recipes_by_ids(db, recipes_ids)
+                st.session_state["weekly_data"] = generate_weekly_plan(filtered_recipes)
+                time.sleep(3)
+            st.success("Recetas creadas :)", icon=":material/award_meal:")
 
 
 if "plan_generated" not in st.session_state:
@@ -105,8 +115,6 @@ if "plan_generated" not in st.session_state:
         """
     )
 
-    st.divider()
-
     # How it works visual guide
     c1, c2, c3 = st.columns(3)
     with c1:
@@ -120,8 +128,6 @@ if "plan_generated" not in st.session_state:
     with c3:
         st.markdown("#### 🥑 3. Cocina")
         st.caption("Obtén tu menú detallado y lista de compras automática.")
-
-    st.divider()
 
     st.info(
         "👈 **Para comenzar:** Ajusta los valores en el panel izquierdo y haz clic en 'Generar Plan Semanal'."
