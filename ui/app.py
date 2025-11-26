@@ -17,11 +17,13 @@ from greedy_algorithm import build_week_plan
 
 db = load_json(RECIPIES_FILE)
 
-st.set_page_config(page_title="SciFitNoFat", page_icon="🥑", layout="wide")
+st.set_page_config(
+    page_title="SciFitNoFat | AI Nutrition", page_icon="🥑", layout="wide"
+)
 
 
 with st.sidebar:
-    st.title("SciFitNoFat 👨🏼‍🍳👩‍🔬")
+    st.title("SciFitNoFat 🥗👨🏼‍🍳👩‍🔬")
     st.header("Configuración ⚙️")
     st.subheader("Ingresa tus macro nutrientes 🧮")
     st.caption("Cumplamos tus metas diarias :material/favorite:")
@@ -92,6 +94,12 @@ with st.sidebar:
 
 
 if "plan_generated" not in st.session_state:
+    st.title("SciFitNoFat 🥗👨🏼‍🍳👩‍🔬")
+    st.markdown("## Propósito")
+    st.markdown("""
+        - SciFitNoFat offers highly personalized, sustainable, and affordable AI-powered meal plans.
+        - Powered by **Pantry-First™ Logic** and Multi-Objective Optimization to reduce cost & waste.
+    """)
     st.info(
         "👈 Por favor ingresa tus datos en la barra lateral y presiona 'Generar Plan'."
     )
@@ -194,3 +202,8 @@ else:
         # --- SHOPPING LIST SUMMARY (Outside tabs) ---
         with st.expander("🛒 Ver Lista de Compras Semanal (Resumen)"):
             st.info("Aquí aparecería la suma de todos los ingredientes de la semana.")
+
+st.markdown("---")
+st.caption(
+    "SciFitNoFat - Sustainable, Affordable, AI-Powered. Made with :material/favorite: from 🇲🇽",
+)
