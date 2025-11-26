@@ -1,7 +1,5 @@
-import time
 import streamlit as st
 from utils import (
-    complete_gen_recipes,
     load_json,
     extract_ingredients,
     generate_weekly_plan,
@@ -87,9 +85,11 @@ with st.sidebar:
                 )
                 # Recipes with fields 'index', 'id_json', 'title', 'ingredients_list', 'calories', 'protein', 'carbs', 'fat', 'dishTypes', 'meal_type', 'matched', 'missing_common', 'missing_normal', 'missing', 'missing_count'
                 recipes_ids = result["selection_ids"]
-                recipes_info= result["selection"]
-                filtered_recipes= filter_recipes_pantry(db, recipes_ids, recipes_info)
-                st.session_state["weekly_data"] = generate_weekly_plan(filtered_recipes, mode)
+                recipes_info = result["selection"]
+                filtered_recipes = filter_recipes_pantry(db, recipes_ids, recipes_info)
+                st.session_state["weekly_data"] = generate_weekly_plan(
+                    filtered_recipes, mode
+                )
             else:
                 recipes_ids, totals = build_week_plan(
                     budget_week=user_data["budget"],
@@ -100,7 +100,9 @@ with st.sidebar:
                     max_repeats_per_recipe=2,
                 )
                 filtered_recipes = filter_recipes_by_ids(db, recipes_ids)
-                st.session_state["weekly_data"] = generate_weekly_plan(filtered_recipes)
+                st.session_state["weekly_data"] = generate_weekly_plan(
+                    filtered_recipes, mode
+                )
             st.success("Recetas creadas :)", icon=":material/award_meal:")
 
 

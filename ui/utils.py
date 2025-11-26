@@ -1,7 +1,7 @@
 import json
 import random
 
-RECIPIES_FILE = "ui/data/all_mexican_recipes.json"
+RECIPIES_FILE = "ui/data/mexican.json"
 DOLLAR_PESO_RATE = 18.5
 
 
@@ -33,7 +33,7 @@ def get_nutrient(recipe, name):
     return "0"
 
 
-def generate_weekly_plan(filtered_recipes, mode):
+def generate_weekly_plan(filtered_recipes, mode: int):
     """
     Generates a weekly plan using ONLY the provided list of filtered recipes.
     Classifies them into Breakfast/Main pools based on keywords.
@@ -42,7 +42,9 @@ def generate_weekly_plan(filtered_recipes, mode):
     plan = {}
 
     if mode == 1:
-        breakfast_pool = [r for r in filtered_recipes if r.get("meal_type") == "breakfast"]
+        breakfast_pool = [
+            r for r in filtered_recipes if r.get("meal_type") == "breakfast"
+        ]
         lunch_pool = [r for r in filtered_recipes if r.get("meal_type") == "lunch"]
         dinner_pool = [r for r in filtered_recipes if r.get("meal_type") == "dinner"]
 
@@ -181,9 +183,10 @@ def get_weekly_ingredients(weekly_plan):
 
     return ingredients_counter
 
+
 def filter_recipes_pantry(all_recipes, target_ids, recipes_info):
     """Filters all recipes and attaches metadata (like meal_type) from recipes_info."""
-    
+
     target_id_set = set(target_ids)
 
     # Build lookup by id_json
@@ -200,12 +203,14 @@ def filter_recipes_pantry(all_recipes, target_ids, recipes_info):
 
             # If this ID exists in the metadata info, merge it
             if recipe_id in info_by_id:
-                r.update({
-                    "meal_type": info_by_id[recipe_id]["meal_type"],
-                    "matched": info_by_id[recipe_id]["matched"],
-                    "missing": info_by_id[recipe_id]["missing"],
-                    "missing_count": info_by_id[recipe_id]["missing_count"],
-                })
+                r.update(
+                    {
+                        "meal_type": info_by_id[recipe_id]["meal_type"],
+                        "matched": info_by_id[recipe_id]["matched"],
+                        "missing": info_by_id[recipe_id]["missing"],
+                        "missing_count": info_by_id[recipe_id]["missing_count"],
+                    }
+                )
 
             filtered_recipes.append(r)
 
