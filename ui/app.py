@@ -81,7 +81,6 @@ with st.sidebar:
                     generations=500,
                     mutation_rate=0.12,
                     elite_frac=0.06,
-                    random_seed=42,
                 )
                 # Recipes with fields 'index', 'id_json', 'title', 'ingredients_list', 'calories', 'protein', 'carbs', 'fat', 'dishTypes', 'meal_type', 'matched', 'missing_common', 'missing_normal', 'missing', 'missing_count'
                 recipes_ids = result["selection_ids"]

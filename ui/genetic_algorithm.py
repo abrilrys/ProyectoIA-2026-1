@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from typing import Any
 
-
 # New list of common ingredients (reduced)
 COMMON_ASSUMED_INGREDIENTS = {
     "agua",
@@ -36,11 +35,13 @@ COMMON_ASSUMED_INGREDIENTS = {
 COMMON_MISSING_PENALTY = 1  # low penalty for common ingredients
 NORMAL_MISSING_PENALTY = 20  # high penalty for no common ingredients
 
-'''
+"""
 This function loads recipe data from a JSON file into a pandas DataFrame and extracts 
 key nutritional metrics and ingredient lists into dedicated columns. 
 It also cleans dish type data to prepare the dataset for analysis.
-'''
+"""
+
+
 def load_and_prepare(path: str) -> pd.DataFrame:
     with open(path, "r", encoding="utf-8") as f:
         txt = f.read()
@@ -75,13 +76,16 @@ def load_and_prepare(path: str) -> pd.DataFrame:
     return df
 
 
-'''
+"""
 Fuzzy core:
 Normalizes ingredient strings by removing common adjectives and preparation terms 
 (e.g., "diced", "fresh") while performing basic singularization. This ensures 
 ingredients map to a core canonical form for analysis.
-'''
+"""
+
+
 def normalize_ingredient_core(name: str) -> str:
+    """NORMALIZACIÓN / Fuzzy core"""
     if not isinstance(name, str):
         return ""
     name = name.lower().strip()
@@ -114,11 +118,14 @@ def normalize_ingredient_core(name: str) -> str:
         name = name[:-1]
     return name
 
-'''
+
+"""
 Classifies recipe ingredients against pantry items using normalized fuzzy matching. 
 It segregates missing items into assumed staples versus actual shortages, returning 
 sets for matched, common missing, and specific missing ingredients.
-'''
+"""
+
+
 def analyze_recipe_for_pantry(recipe_ingredients: set[str], pantry_items: set[str]):
     """
     Return:
@@ -155,6 +162,7 @@ def analyze_recipe_for_pantry(recipe_ingredients: set[str], pantry_items: set[st
 
 # clasification using dishTypes
 def classify_by_dishtypes(dishtypes: list[str]) -> str:
+    """CLASIFICACIÓN USANDO dishTypes"""
     ds = set([d.lower() for d in dishtypes])
     breakfast_keys = {"breakfast", "morning", "morning meal", "merienda", "desayuno"}
     lunch_keys = {"lunch", "main course", "main", "almuerzo", "comida", "side dish"}
@@ -168,7 +176,6 @@ def classify_by_dishtypes(dishtypes: list[str]) -> str:
     return "lunch"
 
 
-# FITNESS / GLOBAL ERROR (WITH Differentiated penalties)
 def compute_global_error(
     selected_rows: list[dict[str, Any]],
     target: dict[str, float],
@@ -179,6 +186,9 @@ def compute_global_error(
     common_missing_penalty: float,
     normal_missing_penalty: float,
 ):
+    """
+    FITNESS / GLOBAL ERROR (WITH Differentiated penalties)
+    """
     tot_cal = sum(r["calories"] for r in selected_rows)
     tot_pro = sum(r["protein"] for r in selected_rows)
     tot_car = sum(r["carbs"] for r in selected_rows)
@@ -216,13 +226,16 @@ def compute_global_error(
     }
     return err, stats
 
-'''
+
+"""
 GENETIC ALGORITHM
 chromosome layout: [b1_idx, b2_idx, l1_idx, l2_idx, d1_idx, d2_idx]
 Executes a Genetic Algorithm to select an optimal 6-meal plan by evolving 
 combinations of breakfasts, lunches, and dinners. It minimizes macro deviation 
 and missing ingredients through crossover, mutation, and elitist selection.
-'''
+"""
+
+
 def run_ga_select_6(
     recipes_enriched: list[dict[str, Any]],
     breakfast_pool: list[int],
@@ -239,11 +252,10 @@ def run_ga_select_6(
     weight_fat: float = 0.5,
     common_missing_penalty: float = COMMON_MISSING_PENALTY,
     normal_missing_penalty: float = NORMAL_MISSING_PENALTY,
-    random_seed: int = None,
 ):
-    if random_seed is not None:
-        random.seed(random_seed)
-        np.random.seed(random_seed)
+    """GENETIC ALGORITHM (6 genes)
+    chromosome layout: [b1_idx, b2_idx, l1_idx, l2_idx, d1_idx, d2_idx]
+    """
 
     def sample_pool(pool, k):
         if len(pool) >= k:
@@ -384,12 +396,14 @@ def run_ga_select_6(
     }
 
 
-'''
+"""
 WRAPPER:
 Orchestrates the 2-day planning pipeline by enriching recipe data with pantry 
 availability and defining meal pools. It prepares targets and executes the 
 Genetic Algorithm to optimize the selection against specific user goals.
-'''
+"""
+
+
 def generar_plan_2_dias_ga(
     df: pd.DataFrame,
     user_data: dict,
@@ -403,8 +417,12 @@ def generar_plan_2_dias_ga(
     generations: int = 500,
     mutation_rate: float = 0.12,
     elite_frac: float = 0.06,
-    random_seed: int = 42,
 ):
+    """WRAPPER: preparar pools y correr GA (parámetros como argumentos)
+
+    Ejecuta pipeline. Pesos y otros hiperparámetros son argumentos.
+    Pantry + metas se piden por consola. Si deseas que sean argumentos, lo cambio.
+    """
     pantry_input = user_data["ingredients"]
     pantry_items = set([i.strip().lower() for i in pantry_input if i.strip()])
     daily_cal = float(user_data["kcal"])
@@ -413,10 +431,10 @@ def generar_plan_2_dias_ga(
     daily_fat = float(user_data["fat"])
 
     target_macros = {
-        "calories": daily_cal*2,
-        "protein": daily_prot*2,
-        "carbs": daily_carb*2,
-        "fat": daily_fat*2,
+        "calories": daily_cal * 2,
+        "protein": daily_prot * 2,
+        "carbs": daily_carb * 2,
+        "fat": daily_fat * 2,
     }
 
     recipes_enriched = []
@@ -500,7 +518,6 @@ def generar_plan_2_dias_ga(
         weight_fat=weight_fat,
         common_missing_penalty=common_missing_penalty,
         normal_missing_penalty=normal_missing_penalty,
-        random_seed=random_seed,
     )
 
     sel = ga_res["selected"]
@@ -515,3 +532,4 @@ def generar_plan_2_dias_ga(
         "error": ga_res["error"],
         "fitness": ga_res["fitness"],
     }
+

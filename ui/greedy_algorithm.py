@@ -4,12 +4,14 @@ from collections import defaultdict
 
 from utils import RECIPIES_FILE
 
-'''
+"""
 This function extracts specific macronutrient values (Calories, Protein, 
 Fat, Carbohydrates) from a recipe dictionary by parsing its nutrient list. 
 It returns these values as a tuple of floats, or a tuple of four None values
 if any of the required nutrients are missing from the source data.
-'''
+"""
+
+
 def extract_macros(recipe):
     """Extrae calorías, proteína, grasa y carbohidratos."""
     nutrition = recipe.get("nutrition", {})
@@ -37,12 +39,15 @@ def extract_macros(recipe):
         float(wanted["Carbohydrates"]),
     )
 
-'''
+
+"""
 This function loads raw data from a JSON file and processes it into a list 
 of standardized dictionaries containing recipe IDs, titles, prices, 
 and nutritional macros. It filters the data by excluding any recipes that 
 are missing required macro values or have invalid price information.
-'''
+"""
+
+
 def get_recipes():
     with open(RECIPIES_FILE, "r", encoding="utf-8") as f:
         raw_data = json.load(f)
@@ -73,11 +78,14 @@ def get_recipes():
         )
     return recipes
 
-'''
+
+"""
 This function calculates the weighted sum of squared differences between actual and target 
 weekly macronutrients. It serves as an objective function to quantify and minimize deviation 
 from specific nutritional goals.
-'''
+"""
+
+
 def objective(
     weekly_cal,
     weekly_prot,
@@ -92,6 +100,7 @@ def objective(
     w_f=1.0,
     w_c=1.0,
 ):
+    """Función objetivo (error macros/calorías semanal)"""
     return (
         w_cal * (weekly_cal - cal_target_week) ** 2
         + w_p * (weekly_prot - p_target_week) ** 2
@@ -100,11 +109,13 @@ def objective(
     )
 
 
-'''
+"""
 Sets up the state for a greedy meal planner by calculating weekly targets and initializing 
 accumulators for cost, meals, and nutrition. It computes the initial objective score 
 to establish a baseline before selecting recipes.
-'''
+"""
+
+
 def plan_week_greedy(
     recipes,
     budget_week,
@@ -112,13 +123,16 @@ def plan_week_greedy(
     p_target_day,
     f_target_day,
     c_target_day,
-    meals_target=21, # 21 recipes
+    meals_target=21,  # 21 recipes
     max_repeats_per_recipe=2,  # default 2
     w_cal=1.0,
     w_p=1.0,
     w_f=1.0,
     w_c=1.0,
 ):
+    """Planner greedy para 21 comidas (7*3)
+    Devuelve: lista de ids (uno por comida) + summary
+    """
     # Weekly Targets
     cal_target_week = cal_target_day * 7
     p_target_week = p_target_day * 7
@@ -232,11 +246,13 @@ def plan_week_greedy(
     return recipe_ids_sequence, summary
 
 
-'''
+"""
 Acts as a wrapper that loads recipe data and executes the greedy meal planning strategy with 
 user-defined constraints. It returns the selected recipe IDs 
 and a summary of weekly nutritional totals.
-'''
+"""
+
+
 def build_week_plan(
     budget_week,
     cal_target_day,
@@ -250,7 +266,9 @@ def build_week_plan(
     w_f=1.0,
     w_c=1.0,
 ):
-    """
+    """Función de alto nivel
+
+    Devuelve:
       - recipe_ids: [id1, id2, ..., idN] (one for food, it admits repetition)
       - totals: dict of weekly totals and objetives
     """
@@ -292,3 +310,4 @@ def build_week_plan(
     }
 
     return recipe_ids, totals
+

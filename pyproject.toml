@@ -1,7 +1,7 @@
 [project]
-name = "proyectoia-2026-1"
-version = "0.1.0"
-description = "Add your description here"
+name = "scifitnofat"
+version = "0.0.1"
+description = "AI powered meal planing web app"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

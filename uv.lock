@@ -480,17 +480,6 @@ wheels = [
 ]
 
 [[package]]
-name = "proyectoia-2026-1"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "streamlit" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "streamlit", specifier = ">=1.51.0" }]
-
-[[package]]
 name = "pyarrow"
 version = "21.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -662,6 +651,17 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/e9/f8/b8ff786f40470462a252918e0836e0db903c28e88e3eec66bc4a7856ee5d/rpds_py-0.29.0-cp314-cp314t-win32.whl", hash = "sha256:97c817863ffc397f1e6a6e9d2d89fe5408c0a9922dac0329672fb0f35c867ea5", size = 211382, upload-time = "2025-11-16T14:50:12.827Z" },
     { url = "https://files.pythonhosted.org/packages/c9/7f/1a65ae870bc9d0576aebb0c501ea5dccf1ae2178fe2821042150ebd2e707/rpds_py-0.29.0-cp314-cp314t-win_amd64.whl", hash = "sha256:2023473f444752f0f82a58dfcbee040d0a1b3d1b3c2ec40e884bd25db6d117d2", size = 225919, upload-time = "2025-11-16T14:50:14.734Z" },
 ]
+
+[[package]]
+name = "scifitnofat"
+version = "0.0.1"
+source = { virtual = "." }
+dependencies = [
+    { name = "streamlit" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "streamlit", specifier = ">=1.51.0" }]
 
 [[package]]
 name = "six"
