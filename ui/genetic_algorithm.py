@@ -4,9 +4,8 @@ import numpy as np
 import pandas as pd
 from typing import Any
 
-# ---------------------------
-# NUEVA LISTA DE COMUNES (REDUCIDA)
-# ---------------------------
+
+# New list of common ingredients (reduced)
 COMMON_ASSUMED_INGREDIENTS = {
     "agua",
     "water",
@@ -33,11 +32,15 @@ COMMON_ASSUMED_INGREDIENTS = {
     "cinnamon",
 }
 
-# Penalizaciones diferenciadas
-COMMON_MISSING_PENALTY = 1  # penalización muy baja para ingredientes "comunes"
-NORMAL_MISSING_PENALTY = 20  # penalización fuerte para ingredientes no comunes
+# Differentiated penalties
+COMMON_MISSING_PENALTY = 1  # low penalty for common ingredients
+NORMAL_MISSING_PENALTY = 20  # high penalty for no common ingredients
 
-
+'''
+This function loads recipe data from a JSON file into a pandas DataFrame and extracts 
+key nutritional metrics and ingredient lists into dedicated columns. 
+It also cleans dish type data to prepare the dataset for analysis.
+'''
 def load_and_prepare(path: str) -> pd.DataFrame:
     with open(path, "r", encoding="utf-8") as f:
         txt = f.read()
@@ -72,9 +75,12 @@ def load_and_prepare(path: str) -> pd.DataFrame:
     return df
 
 
-# ---------------------------
-# NORMALIZACIÓN / Fuzzy core
-# ---------------------------
+'''
+Fuzzy core:
+Normalizes ingredient strings by removing common adjectives and preparation terms 
+(e.g., "diced", "fresh") while performing basic singularization. This ensures 
+ingredients map to a core canonical form for analysis.
+'''
 def normalize_ingredient_core(name: str) -> str:
     if not isinstance(name, str):
         return ""
@@ -108,14 +114,18 @@ def normalize_ingredient_core(name: str) -> str:
         name = name[:-1]
     return name
 
-
+'''
+Classifies recipe ingredients against pantry items using normalized fuzzy matching. 
+It segregates missing items into assumed staples versus actual shortages, returning 
+sets for matched, common missing, and specific missing ingredients.
+'''
 def analyze_recipe_for_pantry(recipe_ingredients: set[str], pantry_items: set[str]):
     """
-    Devuelve:
-      - matched: ingredientes encontrados en alacena
-      - missing_common: faltantes que están en COMMON_ASSUMED_INGREDIENTS
-      - missing_normal: faltantes que NO están en COMMON_ASSUMED_INGREDIENTS
-      - missing_all: unión de ambos
+    Return:
+      - matched: ingredients found in the pantry
+      - missing_common: missing items that are in COMMON_ASSUMED_INGREDIENTS
+      - missing_normal: missing items that are not in COMMON_ASSUMED_INGREDIENTS
+      - missing_all: union of both
     """
     pantry_cores = {normalize_ingredient_core(p) for p in pantry_items}
     matched = set()
@@ -133,7 +143,7 @@ def analyze_recipe_for_pantry(recipe_ingredients: set[str], pantry_items: set[st
                 found = True
                 break
         if not found:
-            # decidir si es "común" o "normal"
+            # decide if it is common
             if ing in COMMON_ASSUMED_INGREDIENTS or core in COMMON_ASSUMED_INGREDIENTS:
                 missing_common.add(ing)
             else:
@@ -143,9 +153,7 @@ def analyze_recipe_for_pantry(recipe_ingredients: set[str], pantry_items: set[st
     return matched, missing_common, missing_normal, missing_all
 
 
-# ---------------------------
-# CLASIFICACIÓN USANDO dishTypes
-# ---------------------------
+# clasification using dishTypes
 def classify_by_dishtypes(dishtypes: list[str]) -> str:
     ds = set([d.lower() for d in dishtypes])
     breakfast_keys = {"breakfast", "morning", "morning meal", "merienda", "desayuno"}
@@ -160,9 +168,7 @@ def classify_by_dishtypes(dishtypes: list[str]) -> str:
     return "lunch"
 
 
-# ---------------------------
-# FITNESS / ERROR GLOBAL (con penalizaciones diferenciadas)
-# ---------------------------
+# FITNESS / GLOBAL ERROR (WITH Differentiated penalties)
 def compute_global_error(
     selected_rows: list[dict[str, Any]],
     target: dict[str, float],
@@ -185,7 +191,7 @@ def compute_global_error(
         + abs(tot_fat - target["fat"]) * weight_fat
     )
 
-    # contar faltantes únicos de cada tipo
+    # count unique missing items of each type
     missing_common_union = set()
     missing_normal_union = set()
     for r in selected_rows:
@@ -210,11 +216,13 @@ def compute_global_error(
     }
     return err, stats
 
-
-# ---------------------------
-# GENETIC ALGORITHM (6 genes)
-# chromosome layout: [b1_idx, b2_idx, l1_idx, l2_idx, d1_idx, d2_idx]
-# ---------------------------
+'''
+GENETIC ALGORITHM
+chromosome layout: [b1_idx, b2_idx, l1_idx, l2_idx, d1_idx, d2_idx]
+Executes a Genetic Algorithm to select an optimal 6-meal plan by evolving 
+combinations of breakfasts, lunches, and dinners. It minimizes macro deviation 
+and missing ingredients through crossover, mutation, and elitist selection.
+'''
 def run_ga_select_6(
     recipes_enriched: list[dict[str, Any]],
     breakfast_pool: list[int],
@@ -376,9 +384,12 @@ def run_ga_select_6(
     }
 
 
-# ---------------------------
-# WRAPPER: preparar pools y correr GA (parámetros como argumentos)
-# ---------------------------
+'''
+WRAPPER:
+Orchestrates the 2-day planning pipeline by enriching recipe data with pantry 
+availability and defining meal pools. It prepares targets and executes the 
+Genetic Algorithm to optimize the selection against specific user goals.
+'''
 def generar_plan_2_dias_ga(
     df: pd.DataFrame,
     user_data: dict,
@@ -394,10 +405,6 @@ def generar_plan_2_dias_ga(
     elite_frac: float = 0.06,
     random_seed: int = 42,
 ):
-    """
-    Ejecuta pipeline. Pesos y otros hiperparámetros son argumentos (Opción C).
-    Pantry + metas se piden por consola. Si deseas que sean argumentos, lo cambio.
-    """
     pantry_input = user_data["ingredients"]
     pantry_items = set([i.strip().lower() for i in pantry_input if i.strip()])
     daily_cal = float(user_data["kcal"])
